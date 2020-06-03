@@ -14,13 +14,22 @@ export default class TicTacToe extends GameComponent {
     super(props);
     this.state = {
       playerTurn: "initial",
-      createAGrid: []
+      playerAGrid: [],
+      playerBGrid: [],
+      playerAHealth: 0,
+      playerBHealth: 0
     };
   }
 
   onSessionDataChanged(data) {
     console.log("onSessionDataChanged", data);
-    this.setState({ playerTurn: data.playerTurn });
+    this.setState({
+      playerTurn: data.playerTurn,
+      playerAGrid: data.playerAGrid,
+      playerBGrid: data.playerBGrid,
+      playerAHealth: data.playerAHealth,
+      playerBHealth: data.playerBHealth
+    });
   }
 
   handleStartGameClick() {
@@ -40,26 +49,53 @@ export default class TicTacToe extends GameComponent {
         [0, 0, 0, 0, 0],
         [0, 0, 0, 0, 0]
       ],
-      playerAAttack: 2,
-      playerBAttack: 2,
+      playerAHealth: 2,
+      playerBHealth: 2,
       playerTurn: "setup"
     });
   }
 
+  handleAttackStep(currentUserId, creatorId) {
+    if (currentUserId === creatorId) {
+      //
+    } else {
+    }
+    // this.getSessionDatabaseRef().update({
+
+    // })
+  }
+
+  handleClickOnNumber(rowIdx, numIdx, currentUserId, creatorId) {
+    console.log("clicked on", rowIdx, numIdx);
+    var grid = [];
+    if (currentUserId === creatorId) {
+      grid = this.state.playerAGrid;
+      grid[rowIdx][numIdx] = 1;
+      this.setState({ playerAGrid: grid });
+    } else {
+      grid = this.state.playerBGrid;
+      grid[rowIdx][numIdx] = 1;
+      this.setState({ playerBGrid: grid });
+    }
+  }
+
   render() {
-    var id = this.getSessionId();
+    var sessionId = this.getSessionId();
     var users = this.getSessionUserIds().map(user_id => (
       <li key={user_id}>{UserApi.getName(user_id)}</li>
     ));
-    var creator = UserApi.getName(this.getSessionCreatorUserId());
+    var currentUserId = this.getMyUserId();
+    var currentUserName = UserApi.getName(currentUserId);
+    var creatorId = this.getSessionCreatorUserId();
+    var creatorName = UserApi.getName(this.getSessionCreatorUserId());
 
     if (this.state.playerTurn === "initial") {
       return (
         <div>
           You are in the {this.state.playerTurn} step
-          <p>My name is: {UserApi.getName(this.getMyUserId())}</p>
-          <p>Session ID: {id}</p>
-          <p>Session creator: {creator}</p>
+          <p>My name is: {currentUserName}</p>
+          <p>Session ID: {sessionId}</p>
+          <p>Session creator: {creatorName}</p>
           <p>Session users:</p>
           <ul>{users}</ul>
           <button onClick={() => this.handleStartGameClick()}>
@@ -68,11 +104,47 @@ export default class TicTacToe extends GameComponent {
         </div>
       );
     } else if (this.state.playerTurn === "setup") {
+      var grid = [];
+      var health;
+      if (currentUserId === creatorId) {
+        grid = this.state.playerAGrid;
+        health = this.state.playerAHealth;
+      } else {
+        grid = this.state.playerBGrid;
+        health = this.state.playerBHealth;
+      }
       return (
         <div>
           You are in the {this.state.playerTurn} step <br />
+          <br />
           Here is your grid:
-          {/* {playerAGrid} */}
+          {grid.map((row, rowIdx) => {
+            return (
+              <div>
+                {row.map((num, numIdx) => {
+                  return (
+                    <span
+                      onClick={() =>
+                        this.handleClickOnNumber(
+                          rowIdx,
+                          numIdx,
+                          currentUserId,
+                          creatorId
+                        )
+                      }
+                    >
+                      {num + " "}
+                    </span>
+                  );
+                })}
+              </div>
+            );
+          })}
+          <button
+            onClick={() => this.handleAttackStep(currentUserId, creatorId)}
+          >
+            Ready to Attack!
+          </button>
         </div>
       );
     } else {
